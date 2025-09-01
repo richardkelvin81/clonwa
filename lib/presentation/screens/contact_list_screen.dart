@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
@@ -11,12 +12,14 @@ class ContactListScreen extends StatelessWidget {
         title: const Text('Contacts'),
       ),
       body: ListView.builder(
-        itemCount: 10, // Replace with actual contact list
+        itemCount: 2, // Replace with actual contact list
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text('Contact $index'),
+            title: Text('Contact user$index'),
             onTap: () {
               // Start a new chat
+              context.push('/chat/user$index');
+
             },
           );
         },

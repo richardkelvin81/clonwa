@@ -39,6 +39,7 @@ class _ChatScreenState extends State<ChatScreen> {
               itemBuilder: (context, index) {
                 final message = chatProvider.messages[index];
                 return MessageBubble(
+                  userId: 'user1',
                   message: message,
                   onDisplayed: () {
                     if (!message.isRead) {

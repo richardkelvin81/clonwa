@@ -24,12 +24,12 @@ void main() async {
 }
 
 class ThemeProvider with ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.dark;
+  //ThemeMode _themeMode = ThemeMode.light;
 
-  ThemeMode get themeMode => _themeMode;
+  //ThemeMode get themeMode => _themeMode;
 
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+  //  _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
 }
@@ -99,7 +99,7 @@ class MyApp extends StatelessWidget {
           title: 'WhatsApp Clone',
           theme: lightTheme,
           darkTheme: darkTheme,
-          themeMode: themeProvider.themeMode,
+          themeMode: ThemeMode.light,
           routerConfig: router,
         );
       },

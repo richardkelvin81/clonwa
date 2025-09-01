@@ -6,9 +6,10 @@ import 'package:myapp/data/models/message.dart';
 class MessageBubble extends StatefulWidget {
   final Message message;
   final VoidCallback onDisplayed;
+  final String userId;
 
   const MessageBubble(
-      {super.key, required this.message, required this.onDisplayed});
+      {super.key, required this.message, required this.onDisplayed, required this.userId});
 
   @override
   _MessageBubbleState createState() => _MessageBubbleState();
@@ -28,7 +29,7 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final isMe = widget.message.senderId == 'user1'; // Replace with actual user ID
+    final isMe = widget.message.senderId == widget.userId; // Replace with actual user ID
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -73,7 +74,7 @@ class _MessageBubbleState extends State<MessageBubble> {
               children: [
                 Text(
                   DateFormat('HH:mm').format(widget.message.timestamp),
-                  style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 56, 55, 55)),
                 ),
                 if (isMe)
                   Icon(

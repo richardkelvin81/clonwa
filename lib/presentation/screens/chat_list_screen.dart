@@ -29,7 +29,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              GoRouter.of(context).go('/contacts');
+              GoRouter.of(context).push('/contacts');
             },
           )
         ],
@@ -42,7 +42,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             title: Text(chat.id), // Replace with user name
             subtitle: Text(chat.lastMessage?.text ?? ''),
             onTap: () {
-              GoRouter.of(context).go('/chat/${chat.id}');
+              GoRouter.of(context).push('/chat/${chat.id}');
             },
           );
         },
