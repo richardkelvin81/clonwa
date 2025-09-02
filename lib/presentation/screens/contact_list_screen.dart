@@ -1,24 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class ContactListScreen extends StatelessWidget {
+
+import '../providers/users_provider.dart';
+
+class ContactListScreen extends ConsumerWidget {
   const ContactListScreen({super.key});
 
+
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
+     final usuariosProvider = ref.watch(usersProvider);
+
     return Scaffold(
       key: const Key('contact-list-screen'),
       appBar: AppBar(
         title: const Text('Contacts'),
       ),
       body: ListView.builder(
-        itemCount: 2, // Replace with actual contact list
+         itemCount: usuariosProvider.users.length,
+      
         itemBuilder: (context, index) {
+           final usuario = usuariosProvider.users[index];
           return ListTile(
-            title: Text('Contact user$index'),
+            title: Text('Contact ${usuario.name}'),
             onTap: () {
               // Start a new chat
-              context.push('/chat/user$index');
+              context.push('/chat/${usuario.name}');
 
             },
           );

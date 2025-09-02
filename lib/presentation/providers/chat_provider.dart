@@ -9,60 +9,86 @@ import 'package:myapp/data/repositories/chat_repository.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatProvider with ChangeNotifier {
-  final ChatRepository _chatRepository = ChatRepository();
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+/// Estado del chat
+class ChatState {
+  final List<Chat> chats;
+  final List<Message> messages;
+  final bool isRecording;
+  final String? filePath;
+  final String? downloadUrl;
 
-  List<Chat> _chats = [];
-  List<Message> _messages = [];
+  const ChatState({
+    this.chats = const [],
+    this.messages = const [],
+    this.isRecording = false,
+    this.filePath,
+    this.downloadUrl,
+  });
 
+  ChatState copyWith({
+    List<Chat>? chats,
+    List<Message>? messages,
+    bool? isRecording,
+    String? filePath,
+    String? downloadUrl,
+  }) {
+    return ChatState(
+      chats: chats ?? this.chats,
+      messages: messages ?? this.messages,
+      isRecording: isRecording ?? this.isRecording,
+      filePath: filePath ?? this.filePath,
+      downloadUrl: downloadUrl ?? this.downloadUrl,
+    );
+  }
+}
+
+/// Notifier para manejar la lógica del chat
+class ChatNotifier extends StateNotifier<ChatState> {
+  final ChatRepository _chatRepository;
+  final FirebaseStorage _storage;
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  bool _isRecording = false;
-  String? _filePath;
-  String? _downloadUrl;
+
   Timer? _recordTimer;
 
-  List<Chat> get chats => _chats;
-  List<Message> get messages => _messages;
-  bool get isRecording => _isRecording;
-
-  ChatProvider() {
+  ChatNotifier({
+    required ChatRepository chatRepository,
+    FirebaseStorage? storage,
+  })  : _chatRepository = chatRepository,
+        _storage = storage ?? FirebaseStorage.instance,
+        super(const ChatState()) {
     _initRecorder();
   }
 
-  // Inicializa el recorder
   Future<void> _initRecorder() async {
     await _recorder.openRecorder();
   }
 
-  // Genera ruta para archivo de audio
   Future<String> _getFilePath() async {
     final dir = await getApplicationDocumentsDirectory();
     return '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.aac';
   }
 
-  // Obtener chats
+  /// Obtener chats
   void getChats() {
     _chatRepository.getChats().listen((chats) {
-      _chats = chats;
-      notifyListeners();
+      state = state.copyWith(chats: chats);
     });
   }
 
-  // Obtener mensajes de un chat
+  /// Obtener mensajes
   void getMessages(String chatId) {
     _chatRepository.getMessages(chatId).listen((messages) {
-      _messages = messages;
-      notifyListeners();
+      state = state.copyWith(messages: messages);
     });
   }
 
-  // Enviar mensaje de texto
+  /// Enviar mensaje de texto
   Future<void> sendMessage(String chatId, String text) async {
     final message = Message(
       id: '',
-      senderId: 'user1', // reemplazar por el ID real
+      senderId: 'user1', // reemplazar
       text: text,
       timestamp: DateTime.now(),
       isRead: false,
@@ -70,55 +96,52 @@ class ChatProvider with ChangeNotifier {
     await _chatRepository.sendMessage(chatId, message);
   }
 
-  // Inicia grabación
+  /// Iniciar grabación
   Future<void> startRecording() async {
-    if (_isRecording) return;
+    if (state.isRecording) return;
 
     final hasPerm = await _checkPermissions();
     if (!hasPerm) return;
 
-    _filePath = await _getFilePath();
+    final filePath = await _getFilePath();
 
     try {
       await _recorder.startRecorder(
-        toFile: _filePath,
-        codec: Codec.aacMP4, // más seguro en Android/iOS
-        sampleRate: 16000,       // default
+        toFile: filePath,
+        codec: Codec.aacMP4,
+        sampleRate: 16000,
       );
 
-      _isRecording = true;
-      notifyListeners();
+      state = state.copyWith(isRecording: true, filePath: filePath);
 
-      // Detener automáticamente después de 30 segundos
       _recordTimer?.cancel();
       _recordTimer = Timer(const Duration(seconds: 30), () async {
-        if (_isRecording) await stopRecording();
+        if (state.isRecording) await stopRecording();
       });
     } catch (e) {
       debugPrint('Error al iniciar grabación: $e');
     }
   }
 
-  // Detiene grabación
+  /// Detener grabación
   Future<void> stopRecording() async {
-  //  if (!_isRecording) return;
+    if (!state.isRecording) return;
 
     try {
       await _recorder.stopRecorder();
-      _isRecording = false;
       _recordTimer?.cancel();
-      notifyListeners();
+      state = state.copyWith(isRecording: false);
     } catch (e) {
       debugPrint('Error al detener grabación: $e');
     }
   }
 
-  // Enviar mensaje de audio
+  /// Enviar audio
   Future<void> sendAudioMessage(String chatId) async {
-    if (_filePath == null) return;
+    if (state.filePath == null) return;
 
     try {
-      final file = File(_filePath!);
+      final file = File(state.filePath!);
       if (!file.existsSync()) return;
 
       final ref = _storage
@@ -130,7 +153,7 @@ class ChatProvider with ChangeNotifier {
 
       final message = Message(
         id: '',
-        senderId: 'user1', // reemplazar por ID real
+        senderId: 'user1',
         text: '',
         timestamp: DateTime.now(),
         isRead: false,
@@ -139,20 +162,16 @@ class ChatProvider with ChangeNotifier {
 
       await _chatRepository.sendMessage(chatId, message);
 
-      _filePath = null;
-      _downloadUrl = url;
-      notifyListeners();
+      state = state.copyWith(filePath: null, downloadUrl: url);
     } catch (e) {
       debugPrint('Error enviando audio: $e');
     }
   }
 
-  // Actualiza estado de lectura de un mensaje
   void updateMessageReadStatus(String chatId, String messageId) {
     _chatRepository.updateMessageReadStatus(chatId, messageId);
   }
 
-  // Verifica permisos de micrófono
   Future<bool> _checkPermissions() async {
     final micStatus = await Permission.microphone.request();
     return micStatus.isGranted;
@@ -165,3 +184,8 @@ class ChatProvider with ChangeNotifier {
     super.dispose();
   }
 }
+
+/// Provider global
+final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
+  return ChatNotifier(chatRepository: ChatRepository());
+});
