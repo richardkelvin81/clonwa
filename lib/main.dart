@@ -93,6 +93,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'WhatsApp Clone',
       theme: lightTheme,
+      debugShowCheckedModeBanner: false,
       darkTheme: darkTheme,
       themeMode: themeMode,
       routerConfig: router,

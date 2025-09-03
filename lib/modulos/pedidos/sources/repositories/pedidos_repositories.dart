@@ -7,7 +7,8 @@ class PedidosRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Stream<List<Pedido>> getPedidos() {
-    return _firestore.collection('pedidos').snapshots().map((snapshot) {
+    return _firestore.collection('pedidos')
+      .snapshots().map((snapshot) {
       return snapshot.docs.map((doc) => Pedido.fromFirestore(doc)).toList();
     });
   }
@@ -22,6 +23,15 @@ Stream<Pedido?> getPedido(String pedidoId) {
         return Pedido.fromFirestore(snapshot); // le pasas el snapshot
       });
 }
+ Stream<List<Usuario>> getLectoresPorPedido(String pedidoId) {
+    return _firestore
+      .collection('pedidos')
+      .doc(pedidoId)
+      .collection('readers')
+      .snapshots().map((snapshot) {
+        return snapshot.docs.map((doc) => Usuario.fromFirestore(doc)).toList();
+      });
+  }
 
  Future<void> addPedido(Pedido mipedido) async {
     await _firestore

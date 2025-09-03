@@ -8,23 +8,27 @@ import '../../sources/repositories/pedidos_repositories.dart';
 /// Estado del chat
 class PedidosState {
   final List<Pedido> pedidos;
+  final List<Usuario> lectores;
   final Pedido? pedido;
  
 
   const PedidosState({
     this.pedidos = const [],
+    this.lectores = const [],
     this.pedido,
    
   });
 
   PedidosState copyWith({
     List<Pedido>? pedidos,
+    List<Usuario>? lectores,
     Pedido? pedido,
   
   }) {
     return PedidosState(
       pedidos: pedidos ?? this.pedidos,
-      pedido:pedido?? this.pedido
+      pedido:pedido?? this.pedido,
+      lectores: lectores ?? this.lectores,
      
     );
   }
@@ -59,6 +63,11 @@ class PedidosNotifier extends StateNotifier<PedidosState> {
    void getPedido(String idPedido) {
     _pedidosRepository.getPedido(idPedido).listen((mipedido) {
       state = state.copyWith(pedido: mipedido);
+    });
+  }
+    void getLectores(String idPedido) {
+    _pedidosRepository.getLectoresPorPedido(idPedido).listen((mislectores) {
+      state = state.copyWith(lectores: mislectores);
     });
   }
 
