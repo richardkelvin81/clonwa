@@ -1,50 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:myapp/presentation/providers/chat_provider.dart';
 import 'package:myapp/presentation/widgets/message_bubble.dart';
-import 'package:provider/provider.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
 
   const ChatScreen({super.key, required this.chatId});
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    Provider.of<ChatProvider>(context, listen: false).getMessages(widget.chatId);
+    // Escuchar mensajes del chat al iniciar
+    Future.microtask(() {
+      ref.read(chatProvider.notifier).getMessages(widget.chatId);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
+    final chatState = ref.watch(chatProvider);
 
     return Scaffold(
       key: const Key('chat-screen'),
       appBar: AppBar(
-        title: Text(widget.chatId), // Replace with user name
+        title: Text(widget.chatId), // Reemplazar con nombre de usuario real
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
               reverse: true,
-              itemCount: chatProvider.messages.length,
+              itemCount: chatState.messages.length,
               itemBuilder: (context, index) {
-                final message = chatProvider.messages[index];
+                final message = chatState.messages[index];
                 return MessageBubble(
                   userId: 'user1',
                   message: message,
                   onDisplayed: () {
                     if (!message.isRead) {
-                      chatProvider.updateMessageReadStatus(
-                          widget.chatId, message.id);
+                      ref
+                          .read(chatProvider.notifier)
+                          .updateMessageReadStatus(widget.chatId, message.id);
                     }
                   },
                 );
@@ -58,6 +62,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageComposer() {
+    final isRecording = ref.watch(chatProvider).isRecording;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       height: 70.0,
@@ -76,25 +82,23 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          Consumer<ChatProvider>(
-            builder: (context, chatProvider, child) {
-              return IconButton(
-                icon: Icon(chatProvider.isRecording ? Icons.stop : Icons.mic),
-                onPressed: () {
-                  if (chatProvider.isRecording) {
-                    chatProvider.sendAudioMessage(widget.chatId);
-                  } else {
-                    chatProvider.startRecording();
-                  }
-                },
-              );
+          IconButton(
+            icon: Icon(isRecording ? Icons.stop : Icons.mic),
+            onPressed: () {
+              final chatNotifier = ref.read(chatProvider.notifier);
+              if (isRecording) {
+                chatNotifier.sendAudioMessage(widget.chatId);
+              } else {
+                chatNotifier.startRecording();
+              }
             },
           ),
           IconButton(
             icon: const Icon(Icons.send),
             onPressed: () {
               if (_textController.text.isNotEmpty) {
-                Provider.of<ChatProvider>(context, listen: false)
+                ref
+                    .read(chatProvider.notifier)
                     .sendMessage(widget.chatId, _textController.text);
                 _textController.clear();
               }

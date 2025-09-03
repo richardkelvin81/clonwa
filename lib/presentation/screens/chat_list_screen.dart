@@ -1,25 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myapp/presentation/providers/chat_provider.dart';
-import 'package:provider/provider.dart';
 
-class ChatListScreen extends StatefulWidget {
+
+class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
 
-  @override
-  _ChatListScreenState createState() => _ChatListScreenState();
-}
 
-class _ChatListScreenState extends State<ChatListScreen> {
-  @override
-  void initState() {
-    super.initState();
-    Provider.of<ChatProvider>(context, listen: false).getChats();
-  }
 
   @override
-  Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final misChatsProvider = ref.watch(chatProvider);
 
     return Scaffold(
       key: const Key('chat-list-screen'),
@@ -35,9 +27,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ],
       ),
       body: ListView.builder(
-        itemCount: chatProvider.chats.length,
+        itemCount: misChatsProvider.chats.length,
         itemBuilder: (context, index) {
-          final chat = chatProvider.chats[index];
+          final chat = misChatsProvider.chats[index];
           return ListTile(
             title: Text(chat.id), // Replace with user name
             subtitle: Text(chat.lastMessage?.text ?? ''),
