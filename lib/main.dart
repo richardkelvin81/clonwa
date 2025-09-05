@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/router.dart';
 import 'firebase_options.dart';
 
+// ACTUALIZACION DE CLON WA DESDE PC OFICINA
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
